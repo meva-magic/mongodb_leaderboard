@@ -1,15 +1,25 @@
-require('dotenv').config();
-
 const express = require("express");
-const connectDB = require("./config/db");
-const Leaderboard = require("./models/LeaderboardSchema");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+
+// Connect to MongoDB
+mongoose.connect("mongodb://localhost:27017/leaderboard", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
+
+// Define the Player Score schema
+const playerScoreSchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    score: { type: Number, required: true },
+});
+
+// Create the Player Score model
+const Leaderboard = mongoose.model("Leaderboard", playerScoreSchema);
+
+// Initialize Express app
 const app = express();
-
-connectDB();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-const port = process.env.PORT || 3009;
+app.use(bodyParser.json());
 
 // Endpoint to post a new score
 app.post("/api/leaderboard", async (req, res) => {
@@ -20,9 +30,20 @@ app.post("/api/leaderboard", async (req, res) => {
     }
 
     try {
-        const newScore = new Leaderboard({ name, score });
-        const scoreSaved = await newScore.save();
-        res.json(scoreSaved);
+        // Check if the player already exists
+        let playerScore = await Leaderboard.findOne({ name });
+
+        if (playerScore) {
+            // If player exists, update the score
+            playerScore.score = score; // Update the score
+            const updatedScore = await playerScore.save(); // Save the updated score
+            return res.json(updatedScore); // Return the updated score
+        } else {
+            // If player does not exist, create a new score entry
+            const newScore = new Leaderboard({ name, score });
+            const scoreSaved = await newScore.save();
+            return res.json(scoreSaved);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Server Error" });
@@ -32,23 +53,16 @@ app.post("/api/leaderboard", async (req, res) => {
 // Endpoint to get the leaderboard
 app.get("/api/leaderboard", async (req, res) => {
     try {
-        const scores = await Leaderboard.find().sort({ score: -1 }).limit(13);
-        
-        // Format the response to match the expected structure
-        const response = {
-            playerScores: scores.map(score => ({
-                name: score.name,
-                score: score.score
-            }))
-        };
-
-        res.json(response);
+        const scores = await Leaderboard.find().sort({ score: -1 }); // Sort by score descending
+        res.json(scores);
     } catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Server Error" });
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// Start the server
+const PORT = process.env.PORT || 3009;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

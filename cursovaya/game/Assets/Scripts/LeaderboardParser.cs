@@ -38,8 +38,11 @@ public class LeaderboardDisplay : MonoBehaviour
 
     private void DisplayLeaderboard(string json)
     {
-        // Assuming the JSON response is an array of player scores
-        PlayerScore[] playerScores = JsonUtility.FromJson<PlayerScoreArray>(json).playerScores;
+        // Wrap the JSON array in an object for deserialization
+        string wrappedJson = "{\"playerScores\":" + json + "}";
+        
+        // Deserialize the JSON response into the PlayerScoreArray
+        PlayerScoreArray playerScoreArray = JsonUtility.FromJson<PlayerScoreArray>(wrappedJson);
 
         // Clear previous entries
         for (int i = 0; i < leaderboardEntries.Length; i++)
@@ -48,9 +51,9 @@ public class LeaderboardDisplay : MonoBehaviour
         }
 
         // Fill the text fields with leaderboard data
-        for (int i = 0; i < playerScores.Length && i < leaderboardEntries.Length; i++)
+        for (int i = 0; i < playerScoreArray.playerScores.Length && i < leaderboardEntries.Length; i++)
         {
-            leaderboardEntries[i].text = $"{playerScores[i].name}: {playerScores[i].score}";
+            leaderboardEntries[i].text = $"{playerScoreArray.playerScores[i].name}: {playerScoreArray.playerScores[i].score}";
         }
     }
 

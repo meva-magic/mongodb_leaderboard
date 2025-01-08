@@ -22,13 +22,26 @@ public class LeaderboardHandler : MonoBehaviour
 
     IEnumerator PostScore()
     {
+        if (string.IsNullOrEmpty(playerName.text) || string.IsNullOrEmpty(score.text))
+        {
+            Debug.LogError("Player name or score is empty.");
+            yield break; // Exit if inputs are invalid
+        }
+
+        int parsedScore;
+        if (!int.TryParse(score.text, out parsedScore))
+        {
+            Debug.LogError("Invalid score input");
+            yield break; // Exit if parsing fails
+        }
+
         PlayerScore playerScore = new PlayerScore
         {
             name = playerName.text,
-            score = int.Parse(score.text) // Преобразование строки в целое число
+            score = parsedScore
         };
 
-        string json = JsonUtility.ToJson(playerScore); // Сериализация объекта в JSON
+        string json = JsonUtility.ToJson(playerScore); // Serialize to JSON
 
         using (UnityWebRequest www = new UnityWebRequest("http://localhost:3009/api/leaderboard", "POST"))
         {
@@ -41,15 +54,14 @@ public class LeaderboardHandler : MonoBehaviour
 
             if (www.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(www.error);
+                Debug.LogError($"Error posting score: {www.error}");
             }
             else
             {
-                Debug.Log("Form upload complete!");
+                Debug.Log("Score upload complete! Response: " + www.downloadHandler.text);
             }
         }
     }
-
 
     public void GetLeaderboard()
     {
@@ -58,16 +70,18 @@ public class LeaderboardHandler : MonoBehaviour
 
     IEnumerator GetLeaderboardRoutine()
     {
-        using(UnityWebRequest www = UnityWebRequest.Get("http://localhost:3009/api/leaderboard"))
+        using (UnityWebRequest www = UnityWebRequest.Get("http://localhost:3009/api/leaderboard"))
         {
             yield return www.SendWebRequest();
 
-            if(www.result != UnityWebRequest.Result.Success)
+            if (www.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError(www.error);
             }
-
-            else{Debug.Log(www.downloadHandler.text);}
+            else
+            {
+                Debug.Log("Leaderboard data: " + www.downloadHandler.text);
+            }
         }
     }
 }
