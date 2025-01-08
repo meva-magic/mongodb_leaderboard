@@ -49,4 +49,25 @@ public class LeaderboardHandler : MonoBehaviour
             }
         }
     }
+
+
+    public void GetLeaderboard()
+    {
+        StartCoroutine(GetLeaderboardRoutine());
+    }
+
+    IEnumerator GetLeaderboardRoutine()
+    {
+        using(UnityWebRequest www = UnityWebRequest.Get("http://localhost:3009/api/leaderboard"))
+        {
+            yield return www.SendWebRequest();
+
+            if(www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(www.error);
+            }
+
+            else{Debug.Log(www.downloadHandler.text);}
+        }
+    }
 }
