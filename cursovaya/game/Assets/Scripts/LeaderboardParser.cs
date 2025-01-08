@@ -2,15 +2,23 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
+using UnityEngine.UI;
 
 public class LeaderboardDisplay : MonoBehaviour
 {
     public TMP_Text[] leaderboardEntries = new TMP_Text[13]; // Array to hold references to the text fields
+    public Button refreshButton; // Reference to the refresh button
 
     private void Start()
     {
-        // Automatically fetch leaderboard data on start
+        // Automatically fetch leaderboard data on start (optional)
         GetLeaderboard();
+
+        // Add listener to the refresh button
+        if (refreshButton != null)
+        {
+            refreshButton.onClick.AddListener(GetLeaderboard);
+        }
     }
 
     public void GetLeaderboard()
